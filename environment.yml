@@ -1,4 +1,4 @@
-name: comovement
+name: CCM
 channels:
   - conda-forge
   - pytorch
@@ -9,7 +9,7 @@ dependencies:
   - matplotlib
   - seaborn
   - pandas
-  - fastpartquet
+  - fastparquet
   - pyarrow
   - statsmodels
   - neovim
