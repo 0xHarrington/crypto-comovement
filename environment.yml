@@ -13,6 +13,7 @@ dependencies:
   - pyarrow
   - statsmodels
   - neovim
+  - sklearn
   - jupyter
   - jupyterlab
   - pytorch>=1.4
