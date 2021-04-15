@@ -14,6 +14,11 @@ top_30 = ["BTC", "ETH", "USDT", "XRP", "BCH", "BNB", "LINK", "DOT", "ADA", "LTC"
 
 top_10 = ["BTC", "ETH", "USDT", "XRP", "BCH", "BNB", "LINK", "DOT", "ADA", "LTC"] # 27 
 
+one_yr = ['BTC', 'ETH', 'BCH', 'BNB', 'LINK', 'ADA', 'LTC', 'EOS', 'XMR', 'TRX', 'XTZ', 'XLM', 'NEO', 'ATOM',
+               'ZEC', 'VET', 'THETA', 'DASH', 'ETC', 'OMG', 'ONT', 'FTT', 'BTT', 'ALGO', 'DOGE', 'REN']
+
+two_yr = ['BTC', 'ETH', 'BNB', 'LINK', 'ADA', 'LTC', 'EOS', 'TRX', 'XLM', 'NEO', 'VET', 'ETC', 'ONT', 'BTT']
+
 stable = ["USDT", "TUSD", 'DAI', 'USDC', 'PAX', "BITUSD", "EOSDT", "GUSD", "BGBP", "USDS", "RSV", "BUSD"]
 
 blacklist = ["XRP"]

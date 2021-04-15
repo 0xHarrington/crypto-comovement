@@ -23,7 +23,9 @@ def main(directory):
             if (c1 in subset and c2 in stable) or (c2 in subset and c1 in stable):
                 print(dirname + "/" + filename)
             else:
-                os.remove(dirname + '/' + filename)
+                to_remove = dirname + '/' + filename
+                print("Would remove {} here!".format(to_remove))
+                #  os.remove(to_remove)
 
 print("Did you pass the directory as an arg?")
 print(sys.argv)

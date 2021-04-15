@@ -27,6 +27,25 @@ def load_coins(import_path = 'pairs/', subset = top_50):
     log_returns = _make_returns_df(coins, subset)
     return coins, log_returns
 
+def coin_subset_from_n_days(ts: pd.core.frame.DataFrame, n_days: int):
+    """Get all the coins from ts
+    :ts: DataFrame of coin returns
+    :n_days: Minimum number of days during which the coin has been listed.
+
+    :returns: list of coin tickers
+    """
+
+    day_ret = simplify(ts, '1D')
+    ret = []
+    for c in day_ret.columns:
+        nulls = day_ret[c].isnull().sum()
+        lengs = day_ret[c].shape[0]
+        days = lengs - nulls
+        if days > n_days:
+            ret.append(c)
+
+    return ret
+
 # =============================================================================
 # =============================================================================
 
