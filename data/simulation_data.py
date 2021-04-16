@@ -15,6 +15,8 @@ from torch.utils.data import DataLoader, Dataset
 
 class SimulationDataset():
 
+    # --------------------------------------------------------------------------
+
     class CryptoReturnsDataset(Dataset):
         def __init__(self, ts: pd.core.frame.DataFrame, lag: int):
             self.raw = ts
@@ -36,6 +38,8 @@ class SimulationDataset():
 
         def __len__(self):
             return self.n_samples
+
+    # --------------------------------------------------------------------------
 
     def __init__(self, subset: list, interval = '1D', lag = 1):
         """Create the CryptoReturnsDataset and prepare the instance variables"""
@@ -69,7 +73,6 @@ class SimulationDataset():
         """
         ds = self._get_subset(self.train_test_thresh, self.n_samples)
         return DataLoader(ds, batch_size=64, shuffle=True)
-
 
     def _get_subset(self, start, end):
         """Helper method for indexing into stored dataset
