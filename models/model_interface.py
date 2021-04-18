@@ -1,12 +1,5 @@
 #!/usr/bin/env python
 
-# Standard imports
-import pandas as pd
-import numpy as np
-
-# Pytorch
-from torch import nn
-
 class CryptoModel(object):
     """Custom interface for ML models easing portfolio simulations"""
 
@@ -32,6 +25,20 @@ class CryptoModel(object):
 
         :training_set: DataFrame of training samples
         :returns: TODO
+
+        """
+        raise NotImplemented
+
+    def get_fullname(self):
+        """Get the full-grammar name for this model
+        :returns: English phrase as string
+
+        """
+        raise NotImplemented
+
+    def get_filename(self):
+        """Get the abbreviated (file)name for this model
+        :returns: Abbreviated string with underscores
 
         """
         raise NotImplemented
