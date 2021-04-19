@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 
 # Pytorch
+import torch
 from torch.utils.data import DataLoader, Dataset
 
 
@@ -20,13 +21,12 @@ class SimulationDataset():
             self.raw = ts
             self.lag = lag
             self.n_returns, self.n_coins = self.raw.shape
-            self.n_samples = n_returns - self.lag
+            self.n_samples = self.n_returns - self.lag
 
-            self.samples.shape[0]
-            self.samples = np.zeros((n_samples, self.lag, self.n_coins))
-            for i, samp in enumerate(raw.rolling(window=lag)):
+            self.samples = np.zeros((self.n_samples, self.lag, self.n_coins))
+            for i, samp in enumerate(self.raw.rolling(window=lag)):
                 ind = i - lag + 1
-                if ind >= 0 and ind < n_samples:
+                if ind >= 0 and ind < self.n_samples:
                     self.samples[ind] = samp.values
 
         def __getitem__(self, index):
@@ -62,7 +62,7 @@ class SimulationDataset():
         if index > self.train_test_thresh:
             raise IndexError("Simulation Dataset was passed a training set index beyond the train/test split")
 
-        ds = self._get_subset(index, index + self.train_test_thresh + lag - 1)
+        ds = self._get_subset(index, index + self.train_test_thresh + self.lag - 1)
         return DataLoader(ds, batch_size=64, shuffle=True)
 
     def get_out_of_sample(self):
@@ -78,4 +78,4 @@ class SimulationDataset():
         :end: End of subset
         :returns: Pandas DataFrame of coin returns
         """
-        return CryptoReturnsDataset(self.raw.iloc[index : end], self.lag)
+        return self.CryptoReturnsDataset(self.raw.iloc[start : end], self.lag)

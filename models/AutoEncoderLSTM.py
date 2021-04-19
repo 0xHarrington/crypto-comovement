@@ -82,9 +82,9 @@ class AutoEncoderLSTM(CryptoModel):
 
         # Encoder
         self.ae = self.AutoEncoder(ae_input_size, ae_hidden_size)
-        self.ae_training_loss = []
+        self.ae_training_loss = np.zeros(self.ae_epochs)
         self.lstm = self.SimpleLSTM(self.ae_hid, self.lstm_hid, ae_input_size)
-        self.lstm_training_loss = []
+        self.lstm_training_loss = np.zeros(self.lstm_epochs)
 
     def predict(self, sample):
         """Predict the next out of sample timestep
@@ -112,7 +112,7 @@ class AutoEncoderLSTM(CryptoModel):
         """
 
         # Overwrite cached AE % losses
-        self.ae = AutoEncoder(self.ae_in, self.ae_hid)
+        self.ae = self.AutoEncoder(self.ae_in, self.ae_hid)
         self.training_loss = np.zeros(self.ae_epochs)
 
         ######## Configure the optimiser ########
@@ -122,10 +122,10 @@ class AutoEncoderLSTM(CryptoModel):
         )
 
         ######## Run the training loops ########
-        for epoch in range(num_epochs):
-            for i, data in enumerate(train_loader):
+        for epoch in range(self.ae_epochs):
+            for data in training_set:
                 x, _ = data
-                x = x.to(device)
+                x = x.clone().float().to(self.device)
                 x = x.view(x.size(0), -1)
 
                 # =================== forward =====================
@@ -138,7 +138,7 @@ class AutoEncoderLSTM(CryptoModel):
                 optimizer.step()
 
             # =================== record ========================
-            training_loss[epoch] = loss.item()
+            self.ae_training_loss[epoch] = loss.item()
 
     def _train_lstm(self, training_set):
         """Helper method to contain the training cycle for the LSTM
@@ -146,18 +146,28 @@ class AutoEncoderLSTM(CryptoModel):
         """
 
         # Set the LSTM to training mode
-        self.lstm = SimpleLSLTM(self.ae_hid, self.lstm_hid, ae_input_size)
-        self.LSTM.train()
+        self.lstm = self.SimpleLSTM(self.ae_hid, self.lstm_hid, self.ae_in)
+        self.lstm.train()
 
+        ######## Configure the optimiser ########
+        optimizer = torch.optim.Adam(
+            self.ae.parameters(),
+            lr=self.ae_learning_rate,
+        )
         # Iterate over every batch of sequences
         for epoch in range(self.lstm_epochs):
-            for data, target in enumerate(train_data_gen):
-                data, target = data.clone().float().to(device), target.clone().float().to(device)
-                output = model(data)              # Step ①
-                loss = criterion(output, target)  # Step ②
-                optimizer.zero_grad()             # Step ③
-                loss.backward()                   # Step ④
-                optimizer.step()                  # Step ⑤
+            for data, target in training_set:
+
+                # Convert
+                data = self.ae.encoder(data.clone().float().to(self.device))
+                target = target.clone().float().to(self.device)
+
+                # Perform the training steps
+                output = self.lstm(data)               # Step ①
+                loss = self.criterion(output, target)  # Step ②
+                optimizer.zero_grad()                  # Step ③
+                loss.backward()                        # Step ④
+                optimizer.step()                       # Step ⑤
 
             self.lstm_training_loss[epoch] = loss.item()
 

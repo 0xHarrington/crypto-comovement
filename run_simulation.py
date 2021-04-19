@@ -11,14 +11,20 @@ from utils.subsets import *
 
 """run_simulation.py: Run a portfolio simulation"""
 
-def simulation(models: dict, ts_data: pd.core.frame.DataFrame):
+def simulation(models: dict, ts_data: SimulationDataset):
     """Run one portfolio simulation over the input DataFrame.
     :models: Dictionary of ("Model Name", "Model Object") key-value pairs. Will look for "Model Name".pkl files to load pre-trained models.
     :ts_data: DataFrame of the time series over which you want to train and test.
     :returns: Dictionary of ("Model Name", "Model Predictions") across the testing time period
     """
 
-    print("We in here!")
+    starting_index = 0
+    first_dataset = ts_data.get_training(starting_index)
+
+    for name, model in models.items():
+        model.train(first_dataset)
+        print(f"Trained {name}!")
+
     return
 
 if __name__ == "__main__":
