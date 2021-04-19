@@ -2,8 +2,9 @@ import sys
 import os
 import pandas as pd
 import numpy as np
-#  grab all coin ticker subsets
-from subsets import *
+
+# Subsets
+from utils.subsets import *
 
 # Generate log returns of ts
 def log_ret(ts):
@@ -20,7 +21,7 @@ def simplify(ts, interval):
 
 # -----------------------------------------------------------------------------
 
-def load_coins(import_path = 'pairs/', subset = top_50):
+def load_coins(import_path = 'pairs/', subset = ['BTC', 'ETH']):
     ''' Return pandas dataframe of all .parquet coin values.
     '''
     coins = _make_coins_dict(import_path, subset)
@@ -50,7 +51,7 @@ def coin_subset_from_n_days(ts: pd.core.frame.DataFrame, n_days: int):
 # =============================================================================
 
 # Turn dict of {coin: filename} into pd df
-def _make_returns_df(coins, subset = top_50):
+def _make_returns_df(coins, subset = ['BTC', 'ETH']):
     # Aggregate all 'closes' to one df
     prices_df = []
     for c, f in coins.items():
@@ -63,9 +64,7 @@ def _make_returns_df(coins, subset = top_50):
             top_coins.append(c)
 
     prices_df = prices_df.reindex(columns=top_coins)
-    returns = log_ret(prices_df)
-    print("Log-Returns Head:", returns.head(3))
-    return returns
+    return log_ret(prices_df)
 
 def _make_coins_dict(import_path, subset):
     # Gather all fileneames with tether or in top-50

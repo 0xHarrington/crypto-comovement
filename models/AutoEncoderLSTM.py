@@ -1,0 +1,175 @@
+#!/usr/bin/env python
+
+# Standard imports
+import pandas as pd
+import numpy as np
+
+# Pytorch
+import torch
+from torch import nn
+
+# Local Files
+from models.model_interface import CryptoModel
+
+class AutoEncoderLSTM(CryptoModel):
+    """Custom interface for ML models easing portfolio simulations"""
+
+    class AutoEncoder(nn.Module):
+        def __init__(self, input_dim: int, hidden_dim: int):
+            super().__init__()
+            self.encoder = nn.Sequential(
+                nn.Linear(input_dim, hidden_dim),
+                nn.Tanh(),
+            )
+            self.decoder = nn.Sequential(
+                nn.Linear(hidden_dim, input_dim),
+                nn.Tanh(),
+            )
+
+        def forward(self, x):
+            x = self.encoder(x)
+            x = self.decoder(x)
+            return x
+
+    class SimpleLSTM(nn.Module):
+        def __init__(self, input_size, hidden_size, output_size):
+            super().__init__()
+            self.lstm = torch.nn.LSTM(input_size, hidden_size, batch_first=True)
+            self.linear = torch.nn.Linear(hidden_size, output_size)
+
+        def forward(self, x):
+            h = self.lstm(x)[0]
+            x = self.linear(h)
+            return x
+
+        def get_states_across_time(self, x):
+            h_c = None
+            h_list, c_list = list(), list()
+            with torch.no_grad():
+                for t in range(x.size(1)):
+                    h_c = self.lstm(x[:, [t], :], h_c)[1]
+                    h_list.append(h_c[0])
+                    c_list.append(h_c[1])
+                h = torch.cat(h_list)
+                c = torch.cat(c_list)
+            return h, c
+
+    # ================================================================
+
+    def __init__(self, ae_input_size, ae_hidden_size, lstm_hidden_size):
+        """Create the LSTM with AutoEncoder-compressed inputs.
+
+        :ae_input_size: Input size to the AutoEncoder, should be n_coins
+        :ae_hidden_size: Size of the middle layer in the AutoEncoder
+        :lstm_hidden_size: Size of the hidden dimension in the LSTM predictor
+
+        """
+
+        # Arguments
+        self.ae_in = ae_input_size
+        self.ae_hid = ae_hidden_size
+        self.lstm_hid = lstm_hidden_size
+
+        # Torch
+        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.criterion = nn.MSELoss()
+
+        # Hard-coded variables
+        self.ae_epochs = 200
+        self.ae_learning_rate = 0.001
+        self.lstm_epochs = 6
+        self.lstm_learning_rate = 0.001
+
+        # Encoder
+        self.ae = self.AutoEncoder(ae_input_size, ae_hidden_size)
+        self.ae_training_loss = []
+        self.lstm = self.SimpleLSTM(self.ae_hid, self.lstm_hid, ae_input_size)
+        self.lstm_training_loss = []
+
+    def predict(self, sample):
+        """Predict the next out of sample timestep
+        :sample: Vector or DataFrame of timesteps to use as input for the predictor(s).
+        :returns: Vector of predictions for each of the n_coins.
+        """
+
+        # Set the model to evaluation mode
+        self.lstm.eval()
+        with torch.no_grad():
+            return self.lstm(self.ae(sample))
+
+    def train(self, training_set):
+        """Train, or re-train, the LSTM and AE
+
+        :training_set: DataFrame of training samples
+
+        """
+        self._train_ae(training_set)
+        self._train_lstm(training_set)
+
+    def _train_ae(self, training_set):
+        """Helper method to contain the training cycle for the AutoEncoder
+        :training_set: PyTorch dalaloader training
+        """
+
+        # Overwrite cached AE % losses
+        self.ae = AutoEncoder(self.ae_in, self.ae_hid)
+        self.training_loss = np.zeros(self.ae_epochs)
+
+        ######## Configure the optimiser ########
+        optimizer = torch.optim.Adam(
+            self.ae.parameters(),
+            lr=self.ae_learning_rate,
+        )
+
+        ######## Run the training loops ########
+        for epoch in range(num_epochs):
+            for i, data in enumerate(train_loader):
+                x, _ = data
+                x = x.to(device)
+                x = x.view(x.size(0), -1)
+
+                # =================== forward =====================
+                output = self.ae(x)  # feed <x> (for std AE) or <x_bad> (for denoising AE)
+                loss = self.criterion(output, x.data)
+
+                # =================== backward ====================
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+            # =================== record ========================
+            training_loss[epoch] = loss.item()
+
+    def _train_lstm(self, training_set):
+        """Helper method to contain the training cycle for the LSTM
+        :training_set: PyTorch dataloader for training
+        """
+
+        # Set the LSTM to training mode
+        self.lstm = SimpleLSLTM(self.ae_hid, self.lstm_hid, ae_input_size)
+        self.LSTM.train()
+
+        # Iterate over every batch of sequences
+        for epoch in range(self.lstm_epochs):
+            for data, target in enumerate(train_data_gen):
+                data, target = data.clone().float().to(device), target.clone().float().to(device)
+                output = model(data)              # Step ①
+                loss = criterion(output, target)  # Step ②
+                optimizer.zero_grad()             # Step ③
+                loss.backward()                   # Step ④
+                optimizer.step()                  # Step ⑤
+
+            self.lstm_training_loss[epoch] = loss.item()
+
+    def get_fullname(self):
+        """Get the full-grammar name for this model
+        :returns: English phrase as string
+        """
+        return f"AE({self.ae_hid})-LSTM({self.lstm_hid})"
+
+    def get_filename(self):
+        """Get the abbreviated (file)name for this model
+        :returns: Abbreviated string with underscores
+        """
+        return f"{self.ae_in}Coins-AE({self.ae_hid})_LSTM({self.lstm_hid})"
+

@@ -1,9 +1,15 @@
 #!/usr/bin/env python
+
+# Standard imports
 import pandas as pd
 import numpy as np
 
-"""run_simulation.py: Run a portfolio simulation"""
+# Local Imports
+from models.AutoEncoderLSTM import AutoEncoderLSTM
+from data.simulation_data import SimulationDataset
+from utils.subsets import *
 
+"""run_simulation.py: Run a portfolio simulation"""
 
 def simulation(models: dict, ts_data: pd.core.frame.DataFrame):
     """Run one portfolio simulation over the input DataFrame.
@@ -17,8 +23,13 @@ def simulation(models: dict, ts_data: pd.core.frame.DataFrame):
 
 if __name__ == "__main__":
 
-    models = {}
+    subset = one_yr
+    interval = '1D'
+    lag = 1
+    dataset = SimulationDataset(subset, interval, 1)
 
+    models = {}
+    models['AELSTM'] = AutoEncoderLSTM(len(subset), 2, 4)
 
     #  do I want to leverage pre-trained models?
     #  if so, hey pickled models directory, are any of you the type we want?
@@ -35,6 +46,4 @@ if __name__ == "__main__":
 
     #  now, store the results in which we're interested.
 
-    x = np.arange(3)
-
-    simulation(models, pd.DataFrame(x))
+    simulation(models, dataset)

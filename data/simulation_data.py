@@ -15,8 +15,6 @@ from torch.utils.data import DataLoader, Dataset
 
 class SimulationDataset():
 
-    # --------------------------------------------------------------------------
-
     class CryptoReturnsDataset(Dataset):
         def __init__(self, ts: pd.core.frame.DataFrame, lag: int):
             self.raw = ts
@@ -39,13 +37,13 @@ class SimulationDataset():
         def __len__(self):
             return self.n_samples
 
-    # --------------------------------------------------------------------------
+    # ================================================================
 
     def __init__(self, subset: list, interval = '1D', lag = 1):
         """Create the CryptoReturnsDataset and prepare the instance variables"""
 
         # TODO: Change the below to look for (and create) pickled DataFrames
-        ts = load_coins('data/pairs/', subset)
+        coins, ts = load_coins('data/pairs/', subset)
         ts = ts.resample(interval, label='right', closed='right', axis=0).asfreq()
         self.raw = ts.dropna(0, 'any')
 
