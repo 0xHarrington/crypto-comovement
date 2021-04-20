@@ -50,13 +50,12 @@ class PCALSTM(CryptoModel):
     def predict(self, sample):
         """Predict the next out of sample timestep
         :sample: Vector or DataFrame of timesteps to use as input for the predictor(s).
-        :returns: Vector of predictions for each of the n_coins.
+        :returns: [batch_size, 1, n_coins] Tensor of predictions
         """
 
         for_pca = sample.reshape(sample.shape[0], sample.shape[-1])
         transformed = self.pca.transform(for_pca).reshape(sample.shape[0], 1, -1)
         transformed = torch.tensor(transformed).clone().float().to(self.device)
-        print(f'LSTM prediction pca-transformed sample shape: {transformed.shape}')
 
         # Set the model to evaluation mode
         self.lstm.eval()

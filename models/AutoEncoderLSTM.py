@@ -67,7 +67,7 @@ class AutoEncoderLSTM(CryptoModel):
     def predict(self, sample):
         """Predict the next out of sample timestep
         :sample: Vector or DataFrame of timesteps to use as input for the predictor(s).
-        :returns: Vector of predictions for each of the n_coins.
+        :returns: [batch_size, 1, n_coins] Tensor of predictions
         """
 
         # Set the model to evaluation mode

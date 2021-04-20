@@ -13,32 +13,25 @@ class CryptoModel(object):
 
     def predict(self, sample):
         """Predict the next out of sample timestep
-
         :sample: Vector or DataFrame of timesteps to use as input for the predictor(s).
         :returns: Vector of predictions for each of the n_coins.
-
         """
         raise NotImplemented
 
     def train(self, training_set):
         """Train, or re-train, the predictor(s)
-
         :training_set: DataFrame of training samples
-        :returns: TODO
-
         """
         raise NotImplemented
 
     def get_fullname(self):
         """Get the full-grammar name for this model
         :returns: English phrase as string
-
         """
         raise NotImplemented
 
     def get_filename(self):
         """Get the abbreviated (file)name for this model
         :returns: Abbreviated string with underscores
-
         """
         raise NotImplemented
