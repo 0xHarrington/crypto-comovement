@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 
 # Local Imports
+from models.AutoRegressive import AutoRegressive
 from models.PCALSTM import PCALSTM
 from models.AutoEncoderLSTM import AutoEncoderLSTM
 from data.simulation_data import SimulationDataset
@@ -28,8 +29,10 @@ def simulation(models: dict, ts_data: SimulationDataset):
         print(f"Trained {name}!")
 
         for data, target in ts_data.get_out_of_sample():
-            print(f'{name} predicted data with shape {model.predict(data).shape}!')
+            prediction = model.predict(data).shape
             break
+    print('Predicted everything!')
+
     return
 
 if __name__ == "__main__":
@@ -42,6 +45,7 @@ if __name__ == "__main__":
     models = {}
     models['AELSTM'] = AutoEncoderLSTM(len(subset), latent_dim, 4)
     models['PCALSTM'] = PCALSTM(latent_dim, 4)
+    models['AR'] = AutoRegressive(latent_dim)
 
     #  do I want to leverage pre-trained models?
     #  if so, hey pickled models directory, are any of you the type we want?

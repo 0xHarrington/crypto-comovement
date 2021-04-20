@@ -45,10 +45,10 @@ class SimulationDataset():
         # TODO: Change the below to look for (and create) pickled DataFrames
         coins, ts = load_coins('data/pairs/', subset)
         ts = ts.resample(interval, label='right', closed='right', axis=0).asfreq()
-        self.raw = ts.dropna(0, 'any')
+        self.full_raw = ts.dropna(0, 'any')
 
         self.lag = lag
-        self.n_returns = self.raw.shape[0]
+        self.n_returns = self.full_raw.shape[0]
         self.train_test_thresh = round(self.n_returns * .8) # hard-coded 80/20 train/test
         self.n_oos = self.n_returns - self.train_test_thresh
 
@@ -78,4 +78,4 @@ class SimulationDataset():
         :end: End of subset
         :returns: Pandas DataFrame of coin returns
         """
-        return self.CryptoReturnsDataset(self.raw.iloc[start : end], self.lag)
+        return self.CryptoReturnsDataset(self.full_raw.iloc[start : end], self.lag)
