@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 
 # Local Imports
+from models.PCALSTM import PCALSTM
 from models.AutoEncoderLSTM import AutoEncoderLSTM
 from data.simulation_data import SimulationDataset
 from utils.subsets import *
@@ -32,14 +33,15 @@ def simulation(models: dict, ts_data: SimulationDataset):
     return
 
 if __name__ == "__main__":
-
     subset = one_yr
     interval = '1D'
     lag = 1
+    latent_dim = 2
     dataset = SimulationDataset(subset, interval, 1)
 
     models = {}
-    models['AELSTM'] = AutoEncoderLSTM(len(subset), 2, 4)
+    models['AELSTM'] = AutoEncoderLSTM(len(subset), latent_dim, 4)
+    models['PCALSTM'] = PCALSTM(latent_dim, 4)
 
     #  do I want to leverage pre-trained models?
     #  if so, hey pickled models directory, are any of you the type we want?

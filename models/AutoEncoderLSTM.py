@@ -10,6 +10,7 @@ from torch import nn
 
 # Local Files
 from models.model_interface import CryptoModel
+from models.SimpleLSTM import SimpleLSTM
 
 class AutoEncoderLSTM(CryptoModel):
     """Custom interface for ML models easing portfolio simulations"""
@@ -30,29 +31,6 @@ class AutoEncoderLSTM(CryptoModel):
             x = self.encoder(x)
             x = self.decoder(x)
             return x
-
-    class SimpleLSTM(nn.Module):
-        def __init__(self, input_size, hidden_size, output_size):
-            super().__init__()
-            self.lstm = torch.nn.LSTM(input_size, hidden_size, batch_first=True)
-            self.linear = torch.nn.Linear(hidden_size, output_size)
-
-        def forward(self, x):
-            h = self.lstm(x)[0]
-            x = self.linear(h)
-            return x
-
-        def get_states_across_time(self, x):
-            h_c = None
-            h_list, c_list = list(), list()
-            with torch.no_grad():
-                for t in range(x.size(1)):
-                    h_c = self.lstm(x[:, [t], :], h_c)[1]
-                    h_list.append(h_c[0])
-                    c_list.append(h_c[1])
-                h = torch.cat(h_list)
-                c = torch.cat(c_list)
-            return h, c
 
     # ================================================================
 
@@ -83,7 +61,7 @@ class AutoEncoderLSTM(CryptoModel):
         # Encoder
         self.ae = self.AutoEncoder(ae_input_size, ae_hidden_size)
         self.ae_training_loss = np.zeros(self.ae_epochs)
-        self.lstm = self.SimpleLSTM(self.ae_hid, self.lstm_hid, ae_input_size)
+        self.lstm = SimpleLSTM(self.ae_hid, self.lstm_hid, ae_input_size)
         self.lstm_training_loss = np.zeros(self.lstm_epochs)
 
     def predict(self, sample):
@@ -147,12 +125,12 @@ class AutoEncoderLSTM(CryptoModel):
         """
 
         # Set the LSTM to training mode
-        self.lstm = self.SimpleLSTM(self.ae_hid, self.lstm_hid, self.ae_in)
+        self.lstm = SimpleLSTM(self.ae_hid, self.lstm_hid, self.ae_in)
         self.lstm.train()
 
         ######## Configure the optimiser ########
         optimizer = torch.optim.Adam(
-            self.ae.parameters(),
+            self.lstm.parameters(),
             lr=self.ae_learning_rate,
         )
         # Iterate over every batch of sequences
