@@ -19,12 +19,16 @@ def simulation(models: dict, ts_data: SimulationDataset):
     """
 
     starting_index = 0
-    first_dataset = ts_data.get_training(starting_index)
 
     for name, model in models.items():
-        model.train(first_dataset)
+        ds = ts_data.get_training(starting_index)
+
+        model.train(ds)
         print(f"Trained {name}!")
 
+        for data, target in ts_data.get_out_of_sample():
+            print(f'{name} predicted data with shape {model.predict(data).shape}!')
+            break
     return
 
 if __name__ == "__main__":

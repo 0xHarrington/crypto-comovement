@@ -95,7 +95,8 @@ class AutoEncoderLSTM(CryptoModel):
         # Set the model to evaluation mode
         self.lstm.eval()
         with torch.no_grad():
-            return self.lstm(self.ae(sample))
+            transformed = self.ae.encoder(sample)
+            return self.lstm(transformed)
 
     def train(self, training_set):
         """Train, or re-train, the LSTM and AE
@@ -158,6 +159,10 @@ class AutoEncoderLSTM(CryptoModel):
         for epoch in range(self.lstm_epochs):
             for data, target in training_set:
 
+                # reshape target per pytorch warnings
+                t_shape = target.shape
+                target = target.reshape(t_shape[0], 1, t_shape[1])
+
                 # Convert
                 data = self.ae.encoder(data.clone().float().to(self.device))
                 target = target.clone().float().to(self.device)
@@ -165,6 +170,7 @@ class AutoEncoderLSTM(CryptoModel):
                 # Perform the training steps
                 output = self.lstm(data)               # Step ①
                 loss = self.criterion(output, target)  # Step ②
+                #  print(f'LSTM training: output shape {output.shape}, target shape {target.shape}')
                 optimizer.zero_grad()                  # Step ③
                 loss.backward()                        # Step ④
                 optimizer.step()                       # Step ⑤

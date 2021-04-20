@@ -69,7 +69,7 @@ class SimulationDataset():
         """ Get the testing data from the input dataset. Currently hard-coded to the later 20% of the input timeseries
         :returns: PyTorch DataLoader covering the testing samples
         """
-        ds = self._get_subset(self.train_test_thresh, self.n_samples)
+        ds = self._get_subset(self.train_test_thresh, self.n_returns)
         return DataLoader(ds, batch_size=64, shuffle=True)
 
     def _get_subset(self, start, end):
