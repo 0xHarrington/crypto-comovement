@@ -23,10 +23,13 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
     """
 
     # Grab the dimensions and initialize the prediction husk
-    oos_size, n_coins = ts_data.out_of_sample_shape()
+    oos_ds = ts_data.get_out_of_sample().dataset.raw
+    oos_size, n_coins = oos_ds.shape
     predictions = {}
-    for name in models.keys():
+    results = {}
+    for name, model in models.items():
         predictions[name] = np.ones((oos_size, n_coins)) * 9 # easier to debug
+        results[name] = Results(oos_ds, model)
 
     print('======= Beginning predictions! =======')
     for oos_sample, (oos_data, target) in enumerate(ts_data.get_out_of_sample()):
@@ -44,13 +47,12 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
                 print(f"\tTrained {name}!")
 
             # Perform and store the prediction!
+            #     NOTE: Assuming predicting 1-at-a-time given hard-coded reshape
             prediction = model.predict(oos_data)
             predictions[name][oos_sample, :] = prediction.reshape(1, -1)
+            results[name].add_prediction(prediction.reshape(1, -1))
 
     print('======= Predicted everything! =======')
-
-    # Now, turn per-model predictions to per-model "Results"
-    results = predictions # for now just rename
 
     return results
 
@@ -86,8 +88,8 @@ if __name__ == "__main__":
     predictions = simulation(models, dataset, retrain_frequency)
 
     for name, p in predictions.items():
-        print(f'{name} made predictions of shape {p.shape}')
-        print(f'\tTheir head: {p[:3, :]}')
-        print(f'\tTheir tail: {p[3:, :]}')
+        preds = p.get_predictions()
+        print(f'{name} made predictions of shape {preds.shape}')
+        print(f'\tTheir tail: {preds[2:, :]}')
         print()
 

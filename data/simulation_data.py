@@ -45,7 +45,7 @@ class SimulationDataset():
         """Create the CryptoReturnsDataset and prepare the instance variables"""
 
         filename = f"{len(subset)}-coins_{interval}-returns.pkl"
-        dir_f = f'data/{filename}'
+        dir_f = f'data/raw/{filename}'
 
         # Check for previously-loaded data
         if os.path.isfile(dir_f):
