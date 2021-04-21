@@ -48,9 +48,22 @@ class SimulationDataset():
         self.full_raw = ts.dropna(0, 'any')
 
         self.lag = lag
+        self.n_coins = len(self.full_raw.columns)
         self.n_returns = self.full_raw.shape[0]
         self.train_test_thresh = round(self.n_returns * .8) # hard-coded 80/20 train/test
         self.n_oos = self.n_returns - self.train_test_thresh
+
+    def out_of_sample_shape(self):
+        """Returns the number of out-of-sample testing steps
+        :returns: int
+        """
+        return self.n_oos - self.lag, self.n_coins
+
+    def in_sample_shape(self):
+        """Returns the number of in-sample training samples
+        :returns: int
+        """
+        return self.train_test_thresh - self.lag, self.n_coins
 
     def get_training(self, index: int):
         """Get a training data-sized training set, starting from index. Currently hard-coded to 80% of the input time series.
@@ -70,7 +83,7 @@ class SimulationDataset():
         :returns: PyTorch DataLoader covering the testing samples
         """
         ds = self._get_subset(self.train_test_thresh, self.n_returns)
-        return DataLoader(ds, batch_size=64, shuffle=True)
+        return DataLoader(ds, batch_size=1, shuffle=True)
 
     def _get_subset(self, start, end):
         """Helper method for indexing into stored dataset

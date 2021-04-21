@@ -34,7 +34,7 @@ class AutoEncoderLSTM(CryptoModel):
 
     # ================================================================
 
-    def __init__(self, ae_input_size, ae_hidden_size, lstm_hidden_size):
+    def __init__(self, ae_input_size, ae_hidden_size, lstm_hidden_size, verbose_training=False):
         """Create the LSTM with AutoEncoder-compressed inputs.
 
         :ae_input_size: Input size to the AutoEncoder, should be n_coins
@@ -47,6 +47,7 @@ class AutoEncoderLSTM(CryptoModel):
         self.ae_in = ae_input_size
         self.ae_hid = ae_hidden_size
         self.lstm_hid = lstm_hidden_size
+        self.verbose_training = verbose_training
 
         # Torch
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -102,6 +103,11 @@ class AutoEncoderLSTM(CryptoModel):
 
         ######## Run the training loops ########
         for epoch in range(self.ae_epochs):
+
+            # Verbose Debugging
+            if self.verbose_training and epoch % (self.ae_epochs // 3) == 0:
+                print(f'{self.get_fullname()} at AutoEncoder training epoch {epoch}')
+
             for data in training_set:
                 x, _ = data
                 x = x.clone().float().to(self.device)
@@ -135,6 +141,11 @@ class AutoEncoderLSTM(CryptoModel):
         )
         # Iterate over every batch of sequences
         for epoch in range(self.lstm_epochs):
+
+            # Verbose Debugging
+            if self.verbose_training and (epoch % (self.lstm_epochs // 3) == 0):
+                print(f'{self.get_fullname()} at LSTM training epoch {epoch}')
+
             for data, target in training_set:
 
                 # reshape target per pytorch warnings
@@ -148,7 +159,6 @@ class AutoEncoderLSTM(CryptoModel):
                 # Perform the training steps
                 output = self.lstm(data)               # Step ①
                 loss = self.criterion(output, target)  # Step ②
-                #  print(f'LSTM training: output shape {output.shape}, target shape {target.shape}')
                 optimizer.zero_grad()                  # Step ③
                 loss.backward()                        # Step ④
                 optimizer.step()                       # Step ⑤
@@ -159,7 +169,7 @@ class AutoEncoderLSTM(CryptoModel):
         """Get the full-grammar name for this model
         :returns: English phrase as string
         """
-        return f"AE({self.ae_hid})-LSTM({self.lstm_hid})"
+        return f"AE({self.ae_hid},{self.ae_epochs})-LSTM({self.lstm_hid},{self.lstm_epochs})"
 
     def get_filename(self):
         """Get the abbreviated (file)name for this model
@@ -167,3 +177,8 @@ class AutoEncoderLSTM(CryptoModel):
         """
         return f"{self.ae_in}Coins-AE({self.ae_hid})_LSTM({self.lstm_hid})"
 
+    def needs_retraining(self):
+        """Does this model need regular retraining while forecasting?
+        :returns: bool
+        """
+        return True

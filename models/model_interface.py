@@ -35,3 +35,9 @@ class CryptoModel(object):
         :returns: Abbreviated string with underscores
         """
         raise NotImplemented
+
+    def needs_retraining(self):
+        """Does this model need regular retraining while forecasting?
+        :returns: bool
+        """
+        raise NotImplemented

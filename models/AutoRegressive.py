@@ -61,11 +61,17 @@ class AutoRegressive(CryptoModel):
         :returns: English phrase as string
 
         """
-        raise NotImplemented
+        return f"Auto-Regressive ({self.lag}) latent variable model"
 
     def get_filename(self):
         """Get the abbreviated (file)name for this model
         :returns: Abbreviated string with underscores
 
         """
-        raise NotImplemented
+        return f"AR({self.lag})"
+
+    def needs_retraining(self):
+        """Does this model need regular retraining while forecasting?
+        :returns: bool
+        """
+        return False

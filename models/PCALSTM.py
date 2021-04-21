@@ -21,7 +21,7 @@ class PCALSTM(CryptoModel):
         inputs are first transformed according to their Principal Components
     """
 
-    def __init__(self, num_components, lstm_hidden_size):
+    def __init__(self, num_components, lstm_hidden_size, verbose_training = False):
         """Create the LSTM with PCA-compressed inputs.
 
         :num_components: Number of components to take when transforming
@@ -32,6 +32,7 @@ class PCALSTM(CryptoModel):
         # Arguments
         self.n_components = num_components
         self.lstm_hid = lstm_hidden_size
+        self.verbose_training = verbose_training
 
         # Torch
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -75,12 +76,14 @@ class PCALSTM(CryptoModel):
     def _fit_pca(self, training_set):
         """Helper method to handle fitting the PCA instance
 
-        :training_set: TODO
-        :returns: TODO
+        :training_set: input CryptoModel from which to extract raw time series df
 
         """
+
         self.training_data = training_set.dataset.raw
         self.pca = self.pca.fit(self.training_data)
+        if self.verbose_training:
+            print(f'{self.get_fullname()} finished fitting PCA')
 
     def _train_lstm(self, training_set):
         """Helper method to contain the training cycle for the LSTM
@@ -98,6 +101,12 @@ class PCALSTM(CryptoModel):
         )
         # Iterate over every batch of sequences
         for epoch in range(self.lstm_epochs):
+
+            # Verbose Debugging
+            if self.verbose_training and (epoch % (self.lstm_epochs // 3) == 0):
+                print(f'{self.get_fullname()} at LSTM training epoch {epoch}')
+
+
             for data, target in training_set:
 
                 # reshape target per pytorch warnings
@@ -124,11 +133,16 @@ class PCALSTM(CryptoModel):
         """Get the full-grammar name for this model
         :returns: English phrase as string
         """
-        return f"PCA({self.n_components})-LSTM({self.lstm_hid})"
+        return f"PCA({self.n_components})-LSTM({self.lstm_hid},{self.lstm_epochs})"
 
     def get_filename(self):
         """Get the abbreviated (file)name for this model
         :returns: Abbreviated string with underscores
         """
-        return f"{self.ae_in}Coins-PCA({self.n_components})_LSTM({self.lstm_hid})"
+        return f"{self.ae_in}Coins-PCA({self.n_components})_LSTM({self.lstm_hid},{self.lstm_epochs})"
 
+    def needs_retraining(self):
+        """Does this model need regular retraining while forecasting?
+        :returns: bool
+        """
+        return True
