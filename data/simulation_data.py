@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
-# Local files
-from utils.coin_helpers import load_coins, simplify
-
 # Standard imports
+import pickle
+import os.path
 import pandas as pd
 import numpy as np
 
 # Pytorch
 import torch
 from torch.utils.data import DataLoader, Dataset
+
+# Local files
+from utils.coin_helpers import load_coins, simplify
 
 
 """simulation_data.py: Wrapper for pytorch dataset and dataloader making portfolio simulations easier."""
@@ -42,10 +44,27 @@ class SimulationDataset():
     def __init__(self, subset: list, interval = '1D', lag = 1):
         """Create the CryptoReturnsDataset and prepare the instance variables"""
 
-        # TODO: Change the below to look for (and create) pickled DataFrames
-        coins, ts = load_coins('data/pairs/', subset)
-        ts = ts.resample(interval, label='right', closed='right', axis=0).asfreq()
-        self.full_raw = ts.dropna(0, 'any')
+        filename = f"{len(subset)}-coins_{interval}-returns.pkl"
+        dir_f = f'data/{filename}'
+
+        # Check for previously-loaded data
+        if os.path.isfile(dir_f):
+            f = open(dir_f, 'rb')
+            self.full_raw = pickle.load(f)
+            f.close()
+            print(f'{filename} found and loaded!')
+        else:
+            print(f'Couldn\'t find pickled raw data for {interval}-{len(subset)} coins')
+            # Load all the data
+            _, ts = load_coins('data/pairs/', subset)
+            ts = ts.resample(interval, label='right', closed='right', axis=0).asfreq()
+            self.full_raw = ts.dropna(0, 'any')
+
+            # Pickle and save for next time
+            f = open(dir_f, 'wb')
+            pickle.dump(self.full_raw, f)
+            f.close()
+            print(f'{filename} saved in `data` directory!')
 
         self.lag = lag
         self.n_coins = len(self.full_raw.columns)
