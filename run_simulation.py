@@ -11,6 +11,7 @@ from models.PCALSTM import PCALSTM
 from models.AutoEncoderLSTM import AutoEncoderLSTM
 from data.simulation_data import SimulationDataset
 from utils.subsets import *
+from utils.Results import Results
 
 """run_simulation.py: Run a portfolio simulation"""
 
@@ -34,7 +35,7 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
         retrain = (oos_sample % retrain_frequency == 0)
         if retrain:
             ds = ts_data.get_training(oos_sample)
-            print(f'~~ Retaining models for {oos_sample}\'th prediction ~~')
+            print(f'~~ Retraining models for {oos_sample}\'th prediction ~~')
 
         for name, model in models.items():
             #  Re-train if necessary
