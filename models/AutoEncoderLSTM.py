@@ -182,3 +182,9 @@ class AutoEncoderLSTM(CryptoModel):
         :returns: bool
         """
         return True
+
+    def get_plotting_color(self):
+        """return color for graphing distinction
+        :returns: str of color
+        """
+        return "#5a60bd"

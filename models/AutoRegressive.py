@@ -75,3 +75,9 @@ class AutoRegressive(CryptoModel):
         :returns: bool
         """
         return False
+
+    def get_plotting_color(self):
+        """return color for graphing distinction
+        :returns: str of color
+        """
+        return "#ff8c65"

@@ -12,6 +12,7 @@ from models.AutoEncoderLSTM import AutoEncoderLSTM
 from data.simulation_data import SimulationDataset
 from utils.subsets import *
 from utils.Results import Results
+from utils.plotting import *
 
 """run_simulation.py: Run a portfolio simulation"""
 
@@ -64,32 +65,35 @@ if __name__ == "__main__":
     retrain_frequency = 10
     dataset = SimulationDataset(subset, interval, 1)
 
+    # Menu of models
+    menu = {
+        "AR": "AutoRegressive(latent_dim)",
+        'ARMA': "AutoRegressiveMovingAverage(latent_dim)",
+        'AELSTM': "AutoEncoderLSTM(len(subset), latent_dim, 4)",
+        'PCALSTM': "PCALSTM(latent_dim, 4)"
+    }
+    # Model order for the kitchen
+    model_order = [1, 1, 10, 10]
+
+    # Initialize and populate models dict
     models = {}
-    models['AELSTM'] = AutoEncoderLSTM(len(subset), latent_dim, 4)
-    models['PCALSTM'] = PCALSTM(latent_dim, 4)
-    models['AR'] = AutoRegressive(latent_dim)
-    models['ARMA'] = AutoRegressiveMovingAverage(latent_dim)
-
-    #  do I want to leverage pre-trained models?
-    #  if so, hey pickled models directory, are any of you the type we want?
-    #  are any of you trained on this dataset?
-    #  sweet, let me load all the ones we need
-
-    #  any leftover we haven't trained yet?
-    #  okay, let's get you trained and ready
-
-    #  now, let's start making some predictions!
-    #  prep where we store the predictions...
-    #  now, start generating predictions!
-    #  if we've gone some specific number of predictions without a retrain, retrain!
-
-    #  now, store the results in which we're interested.
+    for i, (name, model_str) in enumerate(menu.items()):
+        print(i, name, model_str)
+        n = model_order[i]
+        if n == 0: continue
+        if n == 1: models[name] = eval(model_str)
+        else:
+            for i in range(n):
+                models[name + str(i + 1)] = eval(model_str)
 
     predictions = simulation(models, dataset, retrain_frequency)
 
-    for name, p in predictions.items():
-        preds = p.get_predictions()
-        print(f'{name} made predictions of shape {preds.shape}')
-        print(f'\tTheir tail: {preds[2:, :]}')
-        print()
+    print("========== SIMULATION RETURNS ==========")
 
+    for name, p in predictions.items():
+        mname = p.get_model_name()
+        ret = p.portfolio_returns()
+        print(f'{mname}:\t{round(ret[-1], 4) * 100}%')
+
+    # Plot the simulation results
+    plot_portfolio_sims(predictions, subset)

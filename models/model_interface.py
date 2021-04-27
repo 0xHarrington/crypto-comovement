@@ -41,3 +41,9 @@ class CryptoModel(object):
         :returns: bool
         """
         raise NotImplemented
+
+    def get_plotting_color(self):
+        """return color for graphing distinction
+        :returns: str of color
+        """
+        raise NotImplemented

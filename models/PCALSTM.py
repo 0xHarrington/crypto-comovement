@@ -139,10 +139,16 @@ class PCALSTM(CryptoModel):
         """Get the abbreviated (file)name for this model
         :returns: Abbreviated string with underscores
         """
-        return f"{self.ae_in}Coins-PCA({self.n_components})_LSTM({self.lstm_hid},{self.lstm_epochs})"
+        return f"{self.training_data.shape[-1]}Coins-PCA({self.n_components})_LSTM({self.lstm_hid},{self.lstm_epochs})"
 
     def needs_retraining(self):
         """Does this model need regular retraining while forecasting?
         :returns: bool
         """
         return True
+
+    def get_plotting_color(self):
+        """return color for graphing distinction
+        :returns: str of color
+        """
+        return "#76a962"
