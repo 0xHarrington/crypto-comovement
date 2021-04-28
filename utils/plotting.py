@@ -20,5 +20,6 @@ def plot_portfolio_sims(results: dict, subset = [], style='ggplot'):
 
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     plt.title(f"{len(subset)}-Coin Portfolio Simulation - Latent Factor Models")
-    plt.legend()
+    if len(results.keys()) < 10:
+        plt.legend()
     plt.show()

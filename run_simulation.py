@@ -62,7 +62,7 @@ if __name__ == "__main__":
     interval = '1D'
     lag = 1
     latent_dim = 2
-    retrain_frequency = 10
+    retrain_frequency = 5
     dataset = SimulationDataset(subset, interval, 1)
 
     # Menu of models
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         'PCALSTM': "PCALSTM(latent_dim, 4)"
     }
     # Model order for the kitchen
-    model_order = [1, 1, 10, 10]
+    model_order = [0,0,50,0]
 
     # Initialize and populate models dict
     models = {}
