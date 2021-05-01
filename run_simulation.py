@@ -8,6 +8,8 @@ import numpy as np
 from models.AutoRegressive import AutoRegressive
 from models.AutoRegMovingAverage import AutoRegressiveMovingAverage
 from models.PCALSTM import PCALSTM
+from models.MultivarPCALSTM import MultivarPCALSTM
+from models.MultivarAutoEncoderLSTM import MultivarAutoEncoderLSTM
 from models.AutoEncoderLSTM import AutoEncoderLSTM
 from data.simulation_data import SimulationDataset
 from utils.subsets import *
@@ -70,10 +72,12 @@ if __name__ == "__main__":
         "AR": "AutoRegressive(latent_dim)",
         'ARMA': "AutoRegressiveMovingAverage(latent_dim)",
         'AELSTM': "AutoEncoderLSTM(len(subset), latent_dim, 4)",
-        'PCALSTM': "PCALSTM(latent_dim, 4)"
+        'PCALSTM': "PCALSTM(latent_dim, 4)",
+        'MvarAELSTM': "MultivarAutoEncoderLSTM(len(subset), latent_dim, 4)",
+        'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
     }
     # Model order for the kitchen
-    model_order = [0,0,50,0]
+    model_order = [0,0,0,0,10,10]
 
     # Initialize and populate models dict
     models = {}
