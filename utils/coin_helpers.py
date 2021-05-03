@@ -107,7 +107,6 @@ def _make_coins_dict(import_path, subset):
     # TODO: Toggle to see top coins without a stable pair
     if False:
         no_stable = []
-        print("Top coins without a stable pair")
         for c in subset: 
             if c in stable: continue
             if c not in coins.keys():

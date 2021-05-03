@@ -19,7 +19,7 @@ from utils.plotting import *
 
 """run_simulation.py: Run a portfolio simulation"""
 
-def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int):
+def simulation(models: dict, ts_data: SimulationDataset, lag: int, retrain_frequency: int):
     """Run one portfolio simulation over the input DataFrame.
     :models: Dictionary of ("Model Name", "Model Object") key-value pairs. Will look for "Model Name".pkl files to load pre-trained models.
     :ts_data: DataFrame of the time series over which you want to train and test.
@@ -29,11 +29,10 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
     # Grab the dimensions and initialize the prediction husk
     oos_ds = ts_data.get_out_of_sample().dataset.raw
     oos_size, n_coins = oos_ds.shape
-    predictions = {}
+    buy_and_hold = np.zeros((oos_size, 1))
     results = {}
     for name, model in models.items():
-        predictions[name] = np.ones((oos_size, n_coins)) * 9 # easier to debug
-        results[name] = Results(oos_ds, model)
+        results[name] = Results(oos_ds, model, lag)
 
     print('======= Beginning predictions! =======')
     for oos_sample, (oos_data, target) in enumerate(ts_data.get_out_of_sample()):
@@ -55,32 +54,33 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
             # Perform and store the prediction!
             #     NOTE: Assuming predicting 1-at-a-time given hard-coded reshape
             prediction = model.predict(oos_data)
-            predictions[name][oos_sample, :] = prediction.reshape(1, -1)
             results[name].add_prediction(prediction.reshape(1, -1))
 
     print('======= Predicted everything! =======')
 
-    return results
+    cret = oos_ds.mean(axis=1)
+
+    return results, oos_ds.mean(axis=1).iloc[lag:]
 
 if __name__ == "__main__":
     subset = one_yr
-    interval = '1h'
-    lag = 1
+    interval = '1D'
+    lag = 1 # not ready for not 1
     latent_dim = 2
-    retrain_frequency = 36
-    dataset = SimulationDataset(subset, interval, 1)
+    retrain_frequency = 10
+    dataset = SimulationDataset(subset, interval, lag)
 
     # Menu of models
     menu = {
         "AR": "AutoRegressive(latent_dim)",
         'ARMA': "AutoRegressiveMovingAverage(latent_dim)",
-        'AELSTM': "AutoEncoderLSTM(len(subset), latent_dim, 4)",
-        'PCALSTM': "PCALSTM(latent_dim, 4)",
+        #  'AELSTM': "AutoEncoderLSTM(len(subset), latent_dim, 4)",
+        #  'PCALSTM': "PCALSTM(latent_dim, 4)",
         'MvarAELSTM': "MultivarAutoEncoderLSTM(len(subset), latent_dim, 4)",
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
     }
     # Model order for the kitchen
-    model_order = [0,0,1,1,1,1]
+    model_order = [1,1,4,4]
 
     # Initialize and populate models dict
     models = {}
@@ -93,14 +93,14 @@ if __name__ == "__main__":
             for i in range(n):
                 models[name + str(i + 1)] = eval(model_str)
 
-    predictions = simulation(models, dataset, retrain_frequency)
+    reults, buy_and_hold = simulation(models, dataset, lag, retrain_frequency)
 
     print("========== SIMULATION RETURNS ==========")
 
-    for name, p in predictions.items():
+    for name, p in reults.items():
         mname = p.get_model_name()
         ret = p.portfolio_returns()
-        print(f'{mname}:\t{round(ret[-1], 4) * 100}%')
+        print(f'{mname}:\t{round(ret[-1], 4)}%')
 
     # Plot the simulation results
-    plot_portfolio_sims(predictions, subset)
+    plot_portfolio_sims(reults, subset, buy_and_hold)

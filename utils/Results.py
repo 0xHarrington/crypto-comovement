@@ -6,10 +6,13 @@ import numpy as np
 import torch
 from torch import nn
 
+# local files
+from utils.simulations import cumret
+
 class Results():
     """Wrapper to interface with the predictions from a simulation trial"""
 
-    def __init__(self, oos_dataset, model):
+    def __init__(self, oos_dataset, model, lag):
         """Create the custom results class
         :oos_dataset: ground truth for out of sample returns
         """
@@ -17,10 +20,10 @@ class Results():
         # Initialize some values for other methods
         self.cumret = []
 
-        # Save the out of sample returns
+        # Save arguments
         self.y = oos_dataset
-        # Save the type of model generating these results
         self.model = model
+        self.lag = lag
 
         # Create the template for the model's returns
         self.y_pred = np.zeros((oos_dataset.shape[0]-1, oos_dataset.shape[1]))
@@ -44,11 +47,14 @@ class Results():
         signs[signs < 0] = -1
 
         # get by-timestep returns as if you invested equally in each coin
-        rets = np.multiply(self.y.iloc[1:], signs).sum(axis=1) / self.y.shape[1]
-        cumret = (((rets + 1).cumprod() - 1) * 100)
-        self.cumret = cumret
+        true = self.y.iloc[self.lag:]
+        rets = np.multiply(true, signs).mean(axis=1)
+        cret = cumret(rets)
+        self.cumret = cret
 
-        return cumret
+        #  print(f'{self.model.get_fullname()} cumret: {cret}')
+
+        return cret
 
     def add_prediction(self, y_pred):
         """Add prediction and true value to stored results
