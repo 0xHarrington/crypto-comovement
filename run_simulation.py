@@ -67,7 +67,7 @@ if __name__ == "__main__":
     interval = '1D'
     lag = 1 # not ready for not 1
     latent_dim = 2
-    retrain_frequency = 10
+    retrain_frequency = 2
     dataset = SimulationDataset(subset, interval, lag)
 
     # Menu of models
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
     }
     # Model order for the kitchen
-    model_order = [1,1,4,4]
+    model_order = [1,1,2,2]
 
     # Initialize and populate models dict
     models = {}
