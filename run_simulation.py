@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Standard imports
+import time
 import pandas as pd
 import numpy as np
 
@@ -46,8 +47,10 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
         for name, model in models.items():
             #  Re-train if necessary
             if (retrain and model.needs_retraining()) or (oos_sample == 0):
+                tic = time.perf_counter()
                 model.train(ds)
-                print(f"\tTrained {name}!")
+                toc = time.perf_counter()
+                print(f"\tTrained {name} in {toc - tic:0.4f} seconds")
 
             # Perform and store the prediction!
             #     NOTE: Assuming predicting 1-at-a-time given hard-coded reshape
@@ -61,10 +64,10 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
 
 if __name__ == "__main__":
     subset = one_yr
-    interval = '1D'
+    interval = '1h'
     lag = 1
     latent_dim = 2
-    retrain_frequency = 1
+    retrain_frequency = 36
     dataset = SimulationDataset(subset, interval, 1)
 
     # Menu of models
@@ -77,7 +80,7 @@ if __name__ == "__main__":
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
     }
     # Model order for the kitchen
-    model_order = [0,0,0,0,15,15]
+    model_order = [0,0,1,1,1,1]
 
     # Initialize and populate models dict
     models = {}
