@@ -80,7 +80,7 @@ if __name__ == "__main__":
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
     }
     # Model order for the kitchen
-    model_order = [1,1,2,2]
+    model_order = [ 0, 0, 0,20]
 
     # Initialize and populate models dict
     models = {}
