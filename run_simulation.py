@@ -19,7 +19,7 @@ from utils.plotting import *
 
 """run_simulation.py: Run a portfolio simulation"""
 
-def simulation(models: dict, ts_data: SimulationDataset, lag: int, retrain_frequency: int):
+def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int):
     """Run one portfolio simulation over the input DataFrame.
     :models: Dictionary of ("Model Name", "Model Object") key-value pairs. Will look for "Model Name".pkl files to load pre-trained models.
     :ts_data: DataFrame of the time series over which you want to train and test.
@@ -29,19 +29,20 @@ def simulation(models: dict, ts_data: SimulationDataset, lag: int, retrain_frequ
     # Grab the dimensions and initialize the prediction husk
     oos_ds = ts_data.get_out_of_sample().dataset.raw
     oos_size, n_coins = oos_ds.shape
+    lag = ts_data.lag
     buy_and_hold = np.zeros((oos_size, 1))
     results = {}
     for name, model in models.items():
         results[name] = Results(oos_ds, model, lag)
 
-    print('======= Beginning predictions! =======')
+    print('============== Beginning predictions! ==============')
     for oos_sample, (oos_data, target) in enumerate(ts_data.get_out_of_sample()):
 
         # Grab new data if retrain is necessary
         retrain = (oos_sample % retrain_frequency == 0)
         if retrain:
             ds = ts_data.get_training(oos_sample)
-            print(f'~~ Retraining models for {oos_sample}\'th prediction ~~')
+            print(f'~~~~~ Retraining models for {oos_sample}\'th prediction ~~~~~')
 
         for name, model in models.items():
             #  Re-train if necessary
@@ -56,7 +57,7 @@ def simulation(models: dict, ts_data: SimulationDataset, lag: int, retrain_frequ
             prediction = model.predict(oos_data)
             results[name].add_prediction(prediction.reshape(1, -1))
 
-    print('======= Predicted everything! =======')
+    print('=============== Predicted everything! ===============')
 
     cret = oos_ds.mean(axis=1)
 
@@ -64,7 +65,7 @@ def simulation(models: dict, ts_data: SimulationDataset, lag: int, retrain_frequ
 
 if __name__ == "__main__":
     subset = one_yr
-    interval = '1D'
+    interval = '12h'
     lag = 1 # not ready for not 1
     latent_dim = 2
     retrain_frequency = 2
@@ -80,7 +81,7 @@ if __name__ == "__main__":
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
     }
     # Model order for the kitchen
-    model_order = [ 0, 0, 0,20]
+    model_order = [ 1, 1, 2, 2]
 
     # Initialize and populate models dict
     models = {}
@@ -93,7 +94,7 @@ if __name__ == "__main__":
             for i in range(n):
                 models[name + str(i + 1)] = eval(model_str)
 
-    reults, buy_and_hold = simulation(models, dataset, lag, retrain_frequency)
+    reults, buy_and_hold = simulation(models, dataset, retrain_frequency)
 
     print("========== SIMULATION RETURNS ==========")
 
