@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 
 # Local Imports
+from models.LASSO import LASSO
 from models.AutoRegressive import AutoRegressive
 from models.AutoRegMovingAverage import AutoRegressiveMovingAverage
 from models.PCALSTM import PCALSTM
@@ -65,10 +66,10 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
 
 if __name__ == "__main__":
     subset = one_yr
-    interval = '12h'
+    interval = '1D'
     lag = 1 # not ready for not 1
     latent_dim = 2
-    retrain_frequency = 2
+    retrain_frequency = 40
     dataset = SimulationDataset(subset, interval, lag)
 
     # Menu of models
@@ -79,9 +80,10 @@ if __name__ == "__main__":
         #  'PCALSTM': "PCALSTM(latent_dim, 4)",
         'MvarAELSTM': "MultivarAutoEncoderLSTM(len(subset), latent_dim, 4)",
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
+        'LASSO': "LASSO()",
     }
     # Model order for the kitchen
-    model_order = [ 1, 1, 2, 2]
+    model_order = [0, 0, 0, 0, 10]
 
     # Initialize and populate models dict
     models = {}

@@ -17,6 +17,7 @@ def log_ret(ts):
 
 # Resample to given interval
 def simplify(ts, interval):
+    print(f'inside simplify: {ts}')
     return ts.resample(interval, label='right', closed='right', axis=0).asfreq()
 
 # -----------------------------------------------------------------------------
@@ -26,6 +27,7 @@ def load_coins(import_path = 'pairs/', subset = ['BTC', 'ETH']):
     '''
     coins = _make_coins_dict(import_path, subset)
     log_returns = _make_returns_df(coins, subset)
+    print(f'about to return in load_coins: {log_returns}')
     return coins, log_returns
 
 def coin_subset_from_n_days(ts: pd.core.frame.DataFrame, n_days: int):
@@ -63,7 +65,12 @@ def _make_returns_df(coins, subset = ['BTC', 'ETH']):
         if c in prices_df.columns:
             top_coins.append(c)
 
+    print(f'about to reindex: {prices_df}')
+
     prices_df = prices_df.reindex(columns=top_coins)
+
+    print(f'just reindexed: {prices_df}')
+
     return log_ret(prices_df)
 
 def _make_coins_dict(import_path, subset):
@@ -71,6 +78,11 @@ def _make_coins_dict(import_path, subset):
     coins, ref = {}, subset
     for dirname, _, filenames in os.walk(import_path):
         for filename in filenames:
+            if "DS_Store" in filename: continue
+
+            # TODO: once parquet saving fixed, change this back from csv's:
+            #  if 'parquet' in filename: continue
+
             c1, c2 = _parse_filename(filename)
 
             # Find only coins in the top X
@@ -126,7 +138,8 @@ def _append_col(filename, df = [], col = 'close'):
     elif c2 in stable and c1 not in stable:
         stab, coin = c2, c1
 
-    # print("Adding {}/{}...".format(coin, stab))
+    #  ts = pd.read_csv(filename, index_col=0, header=0)
+    #  ts = ts[col]
     ts = pd.read_parquet(filename)[col]
     ts.name = coin
     ts.columns = coin
