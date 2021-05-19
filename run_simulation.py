@@ -9,10 +9,9 @@ import numpy as np
 from models.LASSO import LASSO
 from models.AutoRegressive import AutoRegressive
 from models.AutoRegMovingAverage import AutoRegressiveMovingAverage
-from models.PCALSTM import PCALSTM
 from models.MultivarPCALSTM import MultivarPCALSTM
 from models.MultivarAutoEncoderLSTM import MultivarAutoEncoderLSTM
-from models.AutoEncoderLSTM import AutoEncoderLSTM
+from models.MultivarAutoEncoderFFNN import MultivarAutoEncoderFFNN
 from data.simulation_data import SimulationDataset
 from utils.subsets import *
 from utils.Results import Results
@@ -69,21 +68,20 @@ if __name__ == "__main__":
     interval = '1D'
     lag = 1 # not ready for not 1
     latent_dim = 2
-    retrain_frequency = 40
+    retrain_frequency = 5
     dataset = SimulationDataset(subset, interval, lag)
 
-    # Menu of models
+    # Menu of standard models
     menu = {
         "AR": "AutoRegressive(latent_dim)",
         'ARMA': "AutoRegressiveMovingAverage(latent_dim)",
-        #  'AELSTM': "AutoEncoderLSTM(len(subset), latent_dim, 4)",
-        #  'PCALSTM': "PCALSTM(latent_dim, 4)",
         'MvarAELSTM': "MultivarAutoEncoderLSTM(len(subset), latent_dim, 4)",
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
-        'LASSO': "LASSO()",
+        'MvarFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 10)",
+        'LASSO': "LASSO()"
     }
     # Model order for the kitchen
-    model_order = [0, 0, 0, 0, 10]
+    model_order = [0, 0, 0, 0, 0]
 
     # Initialize and populate models dict
     models = {}
@@ -95,6 +93,10 @@ if __name__ == "__main__":
         else:
             for i in range(n):
                 models[name + str(i + 1)] = eval(model_str)
+
+    ####################################
+    ############ RUN THE SIM ###########
+    ####################################
 
     reults, buy_and_hold = simulation(models, dataset, retrain_frequency)
 
