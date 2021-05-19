@@ -10,10 +10,9 @@ from torch import nn
 
 # Local Files
 from models.model_interface import CryptoModel
-from models.SimpleLSTM import SimpleLSTM
 
-class AutoEncoderLSTM(CryptoModel):
-    """Custom interface for ML models easing portfolio simulations"""
+class MultivarAutoEncoderFFNN(CryptoModel):
+    """1-Layer Feed-Forward Neural Network with inputs transformed by a 1-layer AutoEncoder"""
 
     class AutoEncoder(nn.Module):
         def __init__(self, input_dim: int, hidden_dim: int):
@@ -34,19 +33,19 @@ class AutoEncoderLSTM(CryptoModel):
 
     # ================================================================
 
-    def __init__(self, ae_input_size, ae_hidden_size, lstm_hidden_size, verbose_training=False):
-        """Create the LSTM with AutoEncoder-compressed inputs.
+    def __init__(self, ae_input_size, ae_hidden_size, nn_hidden_size, verbose_training=False):
+        """Create the FFNN with AutoEncoder-compressed inputs.
 
         :ae_input_size: Input size to the AutoEncoder, should be n_coins
         :ae_hidden_size: Size of the middle layer in the AutoEncoder
-        :lstm_hidden_size: Size of the hidden dimension in the LSTM predictor
+        :nn_hidden_size: Size of the hidden dimension in the FFNN predictor
 
         """
 
         # Arguments
         self.ae_in = ae_input_size
         self.ae_hid = ae_hidden_size
-        self.lstm_hid = lstm_hidden_size
+        self.nn_hid = nn_hidden_size
         self.verbose_training = verbose_training
 
         # Torch
@@ -56,14 +55,23 @@ class AutoEncoderLSTM(CryptoModel):
         # Hard-coded variables
         self.ae_epochs = 200
         self.ae_learning_rate = 0.001
-        self.lstm_epochs = 6
-        self.lstm_learning_rate = 0.001
+        self.nn_epochs = 6
+        self.nn_learning_rate = 0.001
 
         # Encoder
-        self.ae = self.AutoEncoder(ae_input_size, ae_hidden_size)
+        self.ae = self.AutoEncoder(self.ae_in, self.ae_hid)
         self.ae_training_loss = np.zeros(self.ae_epochs)
-        self.lstm = SimpleLSTM(self.ae_hid, self.lstm_hid, ae_input_size)
-        self.lstm_training_loss = np.zeros(self.lstm_epochs)
+
+        # Initialize multivariate FFNNs
+        self.nn_arr = [0] * self.ae_in
+        for i in range(len(self.nn_arr)):
+            self.nn_arr[i] = nn.Sequential(
+                nn.Linear(self.ae_hid, self.nn_hid),
+                nn.Linear(self.nn_hid, 1)
+            )
+        self.nn_training_loss = np.zeros(self.nn_epochs)
+
+        self.set_plotting_color()
 
     def predict(self, sample):
         """Predict the next out of sample timestep
@@ -71,20 +79,26 @@ class AutoEncoderLSTM(CryptoModel):
         :returns: [batch_size, 1, n_coins] Tensor of predictions
         """
 
-        # Set the model to evaluation mode
-        self.lstm.eval()
-        with torch.no_grad():
-            transformed = self.ae.encoder(sample)
-            return self.lstm(transformed)
+        transformed = self.ae.encoder(sample)
+        transformed = transformed.clone().float().to(self.device)
+
+        ret_list = []
+        for i in range(len(self.nn_arr)):
+            # Set the model to evaluation mode
+            self.nn_arr[i].eval()
+            with torch.no_grad():
+                ret = self.nn_arr[i](transformed)
+                ret_list.append(ret)
+
+        return torch.cat(ret_list, 2)
 
     def train(self, training_set):
-        """Train, or re-train, the LSTM and AE
+        """Train, or re-train, the FFNN and AE
 
         :training_set: DataFrame of training samples
-
         """
         self._train_ae(training_set)
-        self._train_lstm(training_set)
+        self._train_nn(training_set)
 
     def _train_ae(self, training_set):
         """Helper method to contain the training cycle for the AutoEncoder
@@ -125,26 +139,28 @@ class AutoEncoderLSTM(CryptoModel):
             # =================== record ========================
             self.ae_training_loss[epoch] = loss.item()
 
-    def _train_lstm(self, training_set):
-        """Helper method to contain the training cycle for the LSTM
+    def _train_nn(self, training_set):
+        """Helper method to contain the training cycle for the FFNN
         :training_set: PyTorch dataloader for training
         """
 
-        # Set the LSTM to training mode
-        self.lstm = SimpleLSTM(self.ae_hid, self.lstm_hid, self.ae_in)
-        self.lstm.train()
+        ######## Configure the optimisers ########
+        optimisers = [0] * self.ae_in
+        for i in range(len(self.nn_arr)):
+            optimisers[i] = torch.optim.Adam(
+                self.nn_arr[i].parameters(),
+                lr=self.nn_learning_rate,
+            )
 
-        ######## Configure the optimiser ########
-        optimizer = torch.optim.Adam(
-            self.lstm.parameters(),
-            lr=self.ae_learning_rate,
-        )
+            # Set the FFNNs to training mode
+            self.nn_arr[i].train()
+
         # Iterate over every batch of sequences
-        for epoch in range(self.lstm_epochs):
+        for epoch in range(self.nn_epochs):
 
             # Verbose Debugging
-            if self.verbose_training and (epoch % (self.lstm_epochs // 3) == 0):
-                print(f'{self.get_fullname()} at LSTM training epoch {epoch}')
+            if self.verbose_training and (epoch % (self.nn_epochs // 3) == 0):
+                print(f'{self.get_fullname()} at FFNN training epoch {epoch}')
 
             for data, target in training_set:
 
@@ -154,28 +170,31 @@ class AutoEncoderLSTM(CryptoModel):
 
                 # Convert
                 data = self.ae.encoder(data.clone().float().to(self.device))
+                transformed = data.clone().float().to(self.device)
                 target = target.clone().float().to(self.device)
 
-                # Perform the training steps
-                output = self.lstm(data)               # Step ①
-                loss = self.criterion(output, target)  # Step ②
-                optimizer.zero_grad()                  # Step ③
-                loss.backward()                        # Step ④
-                optimizer.step()                       # Step ⑤
+                # Perform the training steps for each of the models
+                for i in range(len(self.nn_arr)):
+                    t = target[:,:,i].reshape(-1, 1, 1)
+                    output = self.nn_arr[i](transformed)  # Step ①
+                    loss = self.criterion(output, t)        # Step ②
+                    optimisers[i].zero_grad()               # Step ③
+                    loss.backward(retain_graph=True)        # Step ④
+                    optimisers[i].step()                    # Step ⑤
 
-            self.lstm_training_loss[epoch] = loss.item()
+            self.nn_training_loss[epoch] = loss.item()
 
     def get_fullname(self):
         """Get the full-grammar name for this model
         :returns: English phrase as string
         """
-        return f"AE({self.ae_hid},{self.ae_epochs})-LSTM({self.lstm_hid},{self.lstm_epochs})"
+        return f"AE({self.ae_hid},{self.ae_epochs})-FFNN({self.nn_hid},{self.nn_epochs})"
 
     def get_filename(self):
         """Get the abbreviated (file)name for this model
         :returns: Abbreviated string with underscores
         """
-        return f"{self.ae_in}Coins-AE({self.ae_hid})_LSTM({self.lstm_hid})"
+        return f"{self.ae_in}Coins-AE({self.ae_hid})_FFNN({self.nn_hid})"
 
     def needs_retraining(self):
         """Does this model need regular retraining while forecasting?
@@ -183,8 +202,14 @@ class AutoEncoderLSTM(CryptoModel):
         """
         return True
 
+    def set_plotting_color(self, color="#5a60bd"):
+        """Set the color used for plotting model outcomes
+        :color: String containing hex value for color
+        """
+        self.color = color
+
     def get_plotting_color(self):
         """return color for graphing distinction
         :returns: str of color
         """
-        return "#5a60bd"
+        return self.color

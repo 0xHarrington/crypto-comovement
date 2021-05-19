@@ -30,6 +30,9 @@ class LASSO(CryptoModel):
 
         self.model = Lasso(alpha=alpha, fit_intercept=True, warm_start=warm_start)
 
+        # set the default plotting color
+        self.set_plotting_color()
+
     def predict(self, sample):
         """Predict the next out of sample timestep
         :sample: Vector or DataFrame of timesteps to use as input for the predictor(s).
@@ -74,8 +77,14 @@ class LASSO(CryptoModel):
         """
         return True
 
+    def set_plotting_color(self, color="#FCB97D"):
+        """Set color used for plotting
+        :color: Hex value string
+        """
+        self.color = color
+
     def get_plotting_color(self):
         """return color for graphing distinction
         :returns: str of color
         """
-        return "#FCB97D"
+        return self.color
