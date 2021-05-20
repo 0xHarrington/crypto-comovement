@@ -30,11 +30,11 @@ if __name__ == "__main__":
     ########## TESTING MODELS ##########
     ####################################
 
-    ffnn_hidden = np.arange(2, 23, 4)
+    ffnn_hidden = np.arange(12, 21, 2)
 
     # Testing best Feed Forward Neural Net hidden size
     for i in ffnn_hidden:
-        for j in range(10):
+        for j in range(20):
             models[f"l-{i}-{j}"] = MultivarAutoEncoderFFNN(len(subset), latent_dim, i)
 
     ####################################
