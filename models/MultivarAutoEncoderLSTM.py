@@ -75,12 +75,6 @@ class MultivarAutoEncoderLSTM(CryptoModel):
         :returns: [batch_size, 1, n_coins] Tensor of predictions
         """
 
-        # Set the model to evaluation mode
-        #  self.lstm.eval()
-        #  with torch.no_grad():
-        #      transformed = self.ae.encoder(sample)
-        #      return self.lstm(transformed)
-
         transformed = self.ae.encoder(sample)
         transformed = transformed.clone().float().to(self.device)
 
