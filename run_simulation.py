@@ -64,11 +64,11 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
     return results, oos_ds.mean(axis=1).iloc[lag:]
 
 if __name__ == "__main__":
-    subset = one_yr
+    subset = two_yr
     interval = '1D'
     lag = 1 # not ready for not 1
     latent_dim = 2
-    retrain_frequency = 2
+    retrain_frequency = 1
     dataset = SimulationDataset(subset, interval, lag)
 
     # Menu of standard models
@@ -78,10 +78,10 @@ if __name__ == "__main__":
         'LASSO': "LASSO()",
         'MvarAELSTM': "MultivarAutoEncoderLSTM(len(subset), latent_dim, 4)",
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
-        'MvarFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 15)"
+        'MvarAEFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 15)"
     }
     # Model order for the kitchen
-    model_order = [1,1,1,3,3,3]
+    model_order = [1,1,1,2,2,2]
 
     # Initialize and populate models dict
     models = {}

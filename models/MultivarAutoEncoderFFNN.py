@@ -202,7 +202,7 @@ class MultivarAutoEncoderFFNN(CryptoModel):
         """
         return True
 
-    def set_plotting_color(self, color="#5a60bd"):
+    def set_plotting_color(self, color="#504260"):
         """Set the color used for plotting model outcomes
         :color: String containing hex value for color
         """
