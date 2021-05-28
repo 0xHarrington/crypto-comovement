@@ -15,6 +15,7 @@ from models.MultivarAutoEncoderFFNN import MultivarAutoEncoderFFNN
 from data.simulation_data import SimulationDataset
 from utils.subsets import *
 from utils.Results import Results
+from utils.simulations import cumret
 from utils.plotting import *
 
 """run_simulation.py: Run a portfolio simulation"""
@@ -81,7 +82,7 @@ if __name__ == "__main__":
         'MvarAEFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 15)"
     }
     # Model order for the kitchen
-    model_order = [1,1,1,2,2,2]
+    model_order = [0,0,1,4,0,4]
 
     # Initialize and populate models dict
     models = {}
@@ -98,14 +99,18 @@ if __name__ == "__main__":
     ############ RUN THE SIM ###########
     ####################################
 
-    reults, buy_and_hold = simulation(models, dataset, retrain_frequency)
+    results, buy_and_hold = simulation(models, dataset, retrain_frequency)
 
     print("========== SIMULATION RETURNS ==========")
 
-    for name, p in reults.items():
+    for name, p in results.items():
         mname = p.get_model_name()
         ret = p.portfolio_returns()
         print(f'{mname}:\t{round(ret[-1], 4)}%')
 
+    i = list(results.values())[0].portfolio_returns().index
+    bnh = cumret(buy_and_hold[-len(i):])
+    print(f'----- Buy and Hold:\t{round(bnh[-1], 2)}% -----')
+
     # Plot the simulation results
-    plot_portfolio_sims(reults, subset, buy_and_hold)
+    plot_portfolio_sims(results, subset, buy_and_hold)
