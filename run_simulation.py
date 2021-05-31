@@ -69,7 +69,7 @@ if __name__ == "__main__":
     interval = '1D'
     lag = 1 # not ready for not 1
     latent_dim = 2
-    retrain_frequency = 1
+    retrain_frequency = 100
     dataset = SimulationDataset(subset, interval, lag)
 
     # Menu of standard models
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         'MvarAEFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 15)"
     }
     # Model order for the kitchen
-    model_order = [0,0,1,4,0,4]
+    model_order = [1,1,1,0,0,0]
 
     # Initialize and populate models dict
     models = {}
@@ -113,4 +113,4 @@ if __name__ == "__main__":
     print(f'----- Buy and Hold:\t{round(bnh[-1], 2)}% -----')
 
     # Plot the simulation results
-    plot_portfolio_sims(results, subset, buy_and_hold)
+    plot_portfolio_sims(results, subset, bnh)

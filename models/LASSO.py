@@ -39,7 +39,10 @@ class LASSO(CryptoModel):
         :returns: [batch_size, 1, n_coins] Tensor of predictions
         """
         n_samp, _, n_features = sample.shape
-        return self.model.predict(sample.reshape((n_samp, n_features)))
+        yhat = self.model.predict(sample.reshape((n_samp, n_features)))
+        if self.verbose_training:
+            print(f'prediction: {yhat}')
+        return yhat
 
     def train(self, training_set):
         """Train, or re-train, the LSTM and AE
@@ -58,6 +61,17 @@ class LASSO(CryptoModel):
         X = X.reshape((n_samples, n_features))
         Y = Y.reshape((n_samples, n_features))
         self.model.fit(X, Y)
+
+        #TODO: print out that coefficients (or at least num of) that the L1 normalization leaves
+        coef = self.model.coef_
+        all_zeros = np.isin([0,-0], coef)
+        if self.verbose_training:
+            print(f'All zeros? {all_zeros}')
+            print(f'Coefs? {coef.shape}')
+            if np.isin(False, all_zeros):
+                print(self.model.coef_)
+                print(type(self.model.coef_))
+                print(self.model.coef_.shape)
 
     def get_fullname(self):
         """Get the full-grammar name for this model

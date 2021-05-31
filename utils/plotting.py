@@ -20,17 +20,22 @@ def plot_portfolio_sims(results: dict, subset=[], buy_and_hold=np.zeros((1,1)), 
 
     plt.style.use(style)
     fig, ax = plt.subplots(figsize=(12,8))
+    plotted_model_types = []
     for name, res in results.items():
-        plt.plot(res.portfolio_returns(), label=name, color=res.get_model_color())
+        if name not in plotted_model_types:
+            plotted_model_types.append(name)
+            plt.plot(res.portfolio_returns(), label=name, color=res.get_model_color())
+        else:
+            plt.plot(res.portfolio_returns(), color=res.get_model_color())
 
     if buy_and_hold.shape != (1,1):
         i = list(results.values())[0].portfolio_returns().index
-        bnh = cumret(buy_and_hold[-len(i):])
-        plt.plot(i, bnh, '--', label='B&H', color='black')
+        plt.plot(i, buy_and_hold, '--', label='B&H', color='black')
 
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     plt.title(f"{len(subset)}-Coin Portfolio Simulation")
-    if len(results.keys()) < 10:
+    print(f'{len(plotted_model_types)} unique models?')
+    if len(plotted_model_types) < 10:
         plt.legend()
     plt.show()
 
@@ -49,6 +54,7 @@ def plot_return_distributions(results: dict, subset=[], style='ggplot'):
     # Create new dict of all the total returns from each dimension size
     rets = {}
     for name in results.keys():
+        print(name)
         _, dim, num = name.split('-')
         rets[dim] = []
     min_x, max_x = np.Inf, np.NINF
