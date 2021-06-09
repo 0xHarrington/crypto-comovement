@@ -22,11 +22,14 @@ def plot_portfolio_sims(results: dict, subset=[], buy_and_hold=np.zeros((1,1)), 
     fig, ax = plt.subplots(figsize=(12,8))
     plotted_model_types = []
     for name, res in results.items():
-        if name not in plotted_model_types:
-            plotted_model_types.append(name)
-            plt.plot(res.portfolio_returns(), label=name, color=res.get_model_color())
-        else:
+        if name[-1].isnumeric():
+            stripped_name = name[:-1]
+        else: stripped_name = name
+        if stripped_name in plotted_model_types:
             plt.plot(res.portfolio_returns(), color=res.get_model_color())
+        else:
+            plotted_model_types.append(str(stripped_name))
+            plt.plot(res.portfolio_returns(), label=stripped_name, color=res.get_model_color())
 
     if buy_and_hold.shape != (1,1):
         i = list(results.values())[0].portfolio_returns().index
