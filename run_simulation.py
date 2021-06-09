@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 # Standard imports
-import time
+import pickle
 import pandas as pd
 import numpy as np
+# Tiemstamping
+import time
+from datetime import datetime
 
 # Local Imports
 from models.LASSO import LASSO
@@ -11,6 +14,7 @@ from models.AutoRegressive import AutoRegressive
 from models.AutoRegMovingAverage import AutoRegressiveMovingAverage
 from models.MultivarPCALSTM import MultivarPCALSTM
 from models.MultivarAutoEncoderLSTM import MultivarAutoEncoderLSTM
+from models.MultivarMultiModelAutoEncoderLSTM import MultivarMultiModelAutoEncoderLSTM
 from models.MultivarAutoEncoderFFNN import MultivarAutoEncoderFFNN
 from data.simulation_data import SimulationDataset
 from utils.subsets import *
@@ -69,20 +73,24 @@ if __name__ == "__main__":
     interval = '1D'
     lag = 1 # not ready for not 1
     latent_dim = 2
-    retrain_frequency = 100
+    retrain_frequency = 1
     dataset = SimulationDataset(subset, interval, lag)
+    PICKLE_RESULTS = True
+
+    n_multi_models = 20
 
     # Menu of standard models
     menu = {
-        "AR": "AutoRegressive(latent_dim)",
-        'ARMA': "AutoRegressiveMovingAverage(latent_dim)",
+        "AR": "AutoRegressive(lag)",
+        'ARMA': "AutoRegressiveMovingAverage(lag)",
         'LASSO': "LASSO()",
+        f'MvarMM{(n_multi_models)}AELSTMs': "MultivarMultiModelAutoEncoderLSTM(len(subset), latent_dim, 4, n_multi_models)",
         'MvarAELSTM': "MultivarAutoEncoderLSTM(len(subset), latent_dim, 4)",
         'MvarPCALSTM': "MultivarPCALSTM(latent_dim, 4)",
         'MvarAEFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 15)"
     }
     # Model order for the kitchen
-    model_order = [1,1,1,0,0,0]
+    model_order = [0,0,0,2,0,0,0]
 
     # Initialize and populate models dict
     models = {}
@@ -107,6 +115,15 @@ if __name__ == "__main__":
         mname = p.get_model_name()
         ret = p.portfolio_returns()
         print(f'{mname}:\t{round(ret[-1], 4)}%')
+
+        if PICKLE_RESULTS:
+            now = datetime.now()
+            tformat = "%Y-%m-%d_%H:%M:%S"
+            fname = f'{now.strftime(tformat)}-retrain({retrain_frequency})-{p.get_model_fname()}.pkl'
+            f = open(f'results/pickle/{fname}', 'wb')
+            pickle.dump(p, f)
+            print(f'Results dumped to {fname}!')
+            time.sleep(1)
 
     i = list(results.values())[0].portfolio_returns().index
     bnh = cumret(buy_and_hold[-len(i):])
