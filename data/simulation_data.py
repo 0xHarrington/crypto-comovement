@@ -41,7 +41,7 @@ class SimulationDataset():
 
     # ================================================================
 
-    def __init__(self, subset: list, interval = '1D', lag = 1):
+    def __init__(self, subset: list, interval = '1D', lag = 1, train_thresh = .8):
         """Create the CryptoReturnsDataset and prepare the instance variables"""
 
         filename = f"{len(subset)}-coins_{interval}-returns.pkl"
@@ -55,8 +55,13 @@ class SimulationDataset():
             print(f'{filename} found and loaded!')
         else:
             print(f'Couldn\'t find pickled raw data for {interval}-{len(subset)} coins')
+
             # Load all the data
-            _, ts = load_coins('data/pairs/', subset)
+
+            # TODO: change back to old data
+            #  _, ts = load_coins('data/pairs/', subset)
+            _, ts = load_coins('data/new_data/', subset)
+
             ts = ts.resample(interval, label='right', closed='right', axis=0).asfreq()
             self.full_raw = ts.dropna(0, 'any')
 
@@ -69,7 +74,7 @@ class SimulationDataset():
         self.lag = lag
         self.n_coins = len(self.full_raw.columns)
         self.n_returns = self.full_raw.shape[0]
-        self.train_test_thresh = round(self.n_returns * .8) # hard-coded 80/20 train/test
+        self.train_test_thresh = round(self.n_returns * train_thresh) # hard-coded 80/20 train/test
         self.n_oos = self.n_returns - self.train_test_thresh
 
     def out_of_sample_shape(self):
