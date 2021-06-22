@@ -17,7 +17,7 @@ def log_ret(ts):
 
 # Resample to given interval
 def simplify(ts, interval):
-    print(f'inside simplify: {ts}')
+#     print(f'inside simplify: {ts}')
     return ts.resample(interval, label='right', closed='right', axis=0).asfreq()
 
 # -----------------------------------------------------------------------------
