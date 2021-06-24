@@ -5,6 +5,7 @@ import numpy as np
 # Pytorch
 import torch
 from torch import nn
+from sklearn.metrics import mean_squared_error
 
 # local files
 from utils.simulations import cumret
@@ -55,6 +56,13 @@ class Results():
         #  print(f'{self.model.get_fullname()} cumret: {cret}')
 
         return cret
+
+    def get_rmse(self):
+        """Returns the average RMSE across all predictions
+        """
+
+        true = self.y.iloc[self.lag:]
+        return mean_squared_error(true.values, self.y_pred)
 
     def add_prediction(self, y_pred):
         """Add prediction and true value to stored results
