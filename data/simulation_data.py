@@ -58,9 +58,8 @@ class SimulationDataset():
 
             # Load all the data
 
-            # TODO: change back to old data
-            #  _, ts = load_coins('data/pairs/', subset)
-            _, ts = load_coins('data/new_data/', subset)
+            _, ts = load_coins('data/pairs/', subset)
+            #  _, ts = load_coins('data/new_data/', subset)  # data updated through May
 
             ts = ts.resample(interval, label='right', closed='right', axis=0).asfreq()
             self.full_raw = ts.dropna(0, 'any')

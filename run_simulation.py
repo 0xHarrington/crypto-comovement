@@ -74,7 +74,8 @@ if __name__ == "__main__":
     lag = 1 # not ready for not 1
     latent_dim = 2
     retrain_frequency = 1
-    dataset = SimulationDataset(subset, interval, lag)
+    train_test_threshold = 0.8
+    dataset = SimulationDataset(subset, interval, lag, train_test_threshold)
     PICKLE_RESULTS = True
 
     n_multi_models = 20
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         'MvarAEFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 15)"
     }
     # Model order for the kitchen
-    model_order = [0,0,0,2,0,0,0]
+    model_order = [1,1,1,0,3,3,3]
 
     # Initialize and populate models dict
     models = {}
