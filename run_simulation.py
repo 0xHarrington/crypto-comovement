@@ -69,7 +69,7 @@ def simulation(models: dict, ts_data: SimulationDataset, retrain_frequency: int)
     return results, oos_ds.mean(axis=1).iloc[lag:]
 
 if __name__ == "__main__":
-    subset = two_yr
+    subset = one_yr
     interval = '1D'
     lag = 1 # not ready for not 1
     latent_dim = 2
@@ -91,44 +91,51 @@ if __name__ == "__main__":
         'MvarAEFFNN': "MultivarAutoEncoderFFNN(len(subset), latent_dim, 15)"
     }
     # Model order for the kitchen
-    model_order = [1,1,1,0,3,3,3]
+    model_order = [1,1,1,0,1,1,1]
 
-    # Initialize and populate models dict
-    models = {}
-    for i, (name, model_str) in enumerate(menu.items()):
-        print(i, name, model_str)
-        n = model_order[i]
-        if n == 0: continue
-        if n == 1: models[name] = eval(model_str)
-        else:
-            for i in range(n):
-                models[name + str(i + 1)] = eval(model_str)
+    # big multi-sim loop
+    for i in range(9):
+        print()
+        print('~~~~~')
+        print()
+        print("BEGINNING ROUND {} OF MULT-SIM RUN".format(i+1))
 
-    ####################################
-    ############ RUN THE SIM ###########
-    ####################################
+        # Initialize and populate models dict
+        models = {}
+        for i, (name, model_str) in enumerate(menu.items()):
+            print(i, name, model_str)
+            n = model_order[i]
+            if n == 0: continue
+            if n == 1: models[name] = eval(model_str)
+            else:
+                for i in range(n):
+                    models[name + str(i + 1)] = eval(model_str)
 
-    results, buy_and_hold = simulation(models, dataset, retrain_frequency)
+        ####################################
+        ############ RUN THE SIM ###########
+        ####################################
 
-    print("========== SIMULATION RETURNS ==========")
+        results, buy_and_hold = simulation(models, dataset, retrain_frequency)
 
-    for name, p in results.items():
-        mname = p.get_model_name()
-        ret = p.portfolio_returns()
-        print(f'{mname}:\t{round(ret[-1], 4)}%')
+        print("========== SIMULATION RETURNS ==========")
 
-        if PICKLE_RESULTS:
-            now = datetime.now()
-            tformat = "%Y-%m-%d_%H:%M:%S"
-            fname = f'{now.strftime(tformat)}-retrain({retrain_frequency})-{p.get_model_fname()}.pkl'
-            f = open(f'results/pickle/{fname}', 'wb')
-            pickle.dump(p, f)
-            print(f'Results dumped to {fname}!')
-            time.sleep(1)
+        for name, p in results.items():
+            mname = p.get_model_name()
+            ret = p.get_portfolio_returns()
+            print(f'{mname}:\t{round(ret[-1], 4)}%')
 
-    i = list(results.values())[0].portfolio_returns().index
-    bnh = cumret(buy_and_hold[-len(i):])
-    print(f'----- Buy and Hold:\t{round(bnh[-1], 2)}% -----')
+            if PICKLE_RESULTS:
+                now = datetime.now()
+                tformat = "%Y-%m-%d_%H:%M:%S"
+                fname = f'{now.strftime(tformat)}-retrain({retrain_frequency})-{p.get_model_fname()}.pkl'
+                f = open(f'results/pickle/{fname}', 'wb')
+                pickle.dump(p, f)
+                print(f'Results dumped to {fname}!')
+                time.sleep(1)
 
-    # Plot the simulation results
-    plot_portfolio_sims(results, subset, bnh)
+        i = list(results.values())[0].get_portfolio_returns().index
+        bnh = cumret(buy_and_hold[-len(i):])
+        print(f'----- Buy and Hold:\t{round(bnh[-1], 2)}% -----')
+
+        # Plot the simulation results
+        #  plot_portfolio_sims(results, subset, bnh)
