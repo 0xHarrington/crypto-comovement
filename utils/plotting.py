@@ -26,13 +26,13 @@ def plot_portfolio_sims(results: dict, subset=[], buy_and_hold=np.zeros((1,1)), 
             stripped_name = name[:-1]
         else: stripped_name = name
         if stripped_name in plotted_model_types:
-            plt.plot(res.portfolio_returns(), color=res.get_model_color())
+            plt.plot(res.cumulative_portfolio_returns(), color=res.get_model_color())
         else:
             plotted_model_types.append(str(stripped_name))
-            plt.plot(res.portfolio_returns(), label=stripped_name, color=res.get_model_color())
+            plt.plot(res.cumulative_portfolio_returns(), label=stripped_name, color=res.get_model_color())
 
     if buy_and_hold.shape != (1,1):
-        i = list(results.values())[0].portfolio_returns().index
+        i = list(results.values())[0].cumulative_portfolio_returns().index
         plt.plot(i, buy_and_hold, '--', label='B&H', color='black')
 
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
@@ -63,7 +63,7 @@ def plot_return_distributions(results: dict, subset=[], style='ggplot'):
     min_x, max_x = np.Inf, np.NINF
     for name, res in results.items():
         _, dim, num = name.split('-')
-        ret = res.portfolio_returns()[-1]
+        ret = res.cumulative_portfolio_returns()[-1]
         rets[dim].append(ret)
 
         # update the linespace boundaries

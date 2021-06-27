@@ -20,6 +20,7 @@ class Results():
 
         # Initialize some values for other methods
         self.cumret = []
+        self.returns = []
 
         # Save arguments
         self.y = oos_dataset
@@ -34,13 +35,20 @@ class Results():
 
         print(f'Created Results for {self.model.get_fullname()} and OoS dataset of shape {self.y.shape}')
 
-    def portfolio_returns(self):
-        """Calculate the cumulative returns over the prediction timeframe
-        :returns: Cumulative returns for this portfolio simulation
+    def get_buy_and_hold(self):
+        """Returns the individual returns from investing evenly across all coins in the simulation
+        :returns: TODO
+
+        """
+        return self.y.iloc[self.lag:].mean(axis=1)
+
+    def get_portfolio_returns(self):
+        """Calculate the individual returns over the prediction timeframe
+        :returns: By-Period returns for this portfolio simulation
         """
 
         # Don't double your work
-        if (len(self.cumret)) > 0: return self.cumret
+        #  if (len(self.returns)) > 0: return self.returns
 
         # convert the predictions to "buy" or "short"
         signs = self.y_pred.copy()
@@ -50,12 +58,43 @@ class Results():
         # get by-timestep returns as if you invested equally in each coin
         true = self.y.iloc[self.lag:]
         rets = np.multiply(true, signs).mean(axis=1)
+        self.returns = rets
+
+        return rets
+
+    def cumulative_portfolio_returns(self):
+        """Returns the cumulative returns of this portfolio simulation
+        :returns: np array
+        """
+
+        # Don't double the work
+        if (len(self.cumret)) > 0: return self.cumret
+
+        rets = self.get_portfolio_returns()
         cret = cumret(rets)
         self.cumret = cret
 
-        #  print(f'{self.model.get_fullname()} cumret: {cret}')
-
         return cret
+
+    def get_sharpe(self, periods_per_day=1):
+        """Returns the sharpe of the portfolio reutrns
+        :periods_per_day: How many samples in this Results object equal one day
+        """
+
+        # Calculate the risk free return over the period
+        risk_free_rate_apy = 0.03
+        daily_rfr = risk_free_rate_apy / 365
+        n_days = len(self.y_pred) / periods_per_day
+        rfr = daily_rfr * n_days
+
+        # Calculate the portfolio_returns and their standard deviation
+        rets = self.get_portfolio_returns()
+        crets = self.cumulative_portfolio_returns()
+        std = np.std(rets)
+        sim_return = (crets.iloc[-1] - 1) / 100
+
+        return (sim_return - rfr) / std
+
 
     def get_rmse(self):
         """Returns the average RMSE across all predictions
